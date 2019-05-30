@@ -59,13 +59,17 @@ class GoertzelFilter(object):
 base_names = ["A", "A#/Bb", "B", "C", "C#/Db", "D", "D#/Eb",
               "E", "F", "F#/Gb", "G", "G#/Ab" ]
 assert len(base_names) == 12
+note_base = 21
 note_filters = []
+note_freqs = []
 note_names = []
-for key in range(21, 89):
+for key in range(note_base, 89):
     freq = 440 * 2**((key - 69) / 12)
+    note_freqs.append(freq)
+
     length = int(ncycles * rate / freq)
     note_filters.append(GoertzelFilter(freq, length))
 
-    note = key - 21
+    note = key - note_base
     name = base_names[note % 12] + "[" + str(note // 12) + "]"
     note_names.append(name)
