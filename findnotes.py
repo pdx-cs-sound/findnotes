@@ -4,7 +4,7 @@
 # Please see the file LICENSE in the source
 # distribution of this software for license terms.
 
-# Find maximum and minimum sample in an audio file.
+# Find notes in an audio file.
 
 import array
 import math
