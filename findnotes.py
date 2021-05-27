@@ -68,13 +68,13 @@ note_end = 80
 note_filters = []
 note_freqs = []
 note_names = []
-for key in range(note_base, note_end):
+for key in range(note_base, note_end + 1):
     freq = 440 * 2**((key - 69) / 12)
     note_freqs.append(freq)
 
     note_filters.append(GoertzelFilter(freq, window_len))
 
-    note = key - note_base
+    note = key - 9
     name = base_names[note % 12] + "[" + str(note // 12) + "]"
     note_names.append(name)
 
@@ -82,5 +82,6 @@ for t in range(0, len(samples) - window_len, window_len):
     window = samples[t:t+window_len]
     powers = [abs(f.filter(window)) for f in note_filters]
     print(round(t / rate, 2))
-    for k in range(note_base, note_end):
-        print(f"  {k} {round(powers[k - note_base], 2)}")
+    for key in range(note_base, note_end + 1):
+        ix = key - note_base
+        print(f"  {note_names[ix]} {round(powers[ix], 2)}")
