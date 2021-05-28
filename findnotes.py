@@ -78,10 +78,31 @@ for key in range(note_base, note_end + 1):
     name = base_names[note % 12] + "[" + str(note // 12) + "]"
     note_names.append(name)
 
+notes_samples = []
 for t in range(0, len(samples) - window_len, window_len):
     window = samples[t:t+window_len]
     powers = [abs(f.filter(window)) for f in note_filters]
-    print(round(t / rate, 2))
+    # print(round(t / rate, 2))
+    ps = []
     for key in range(note_base, note_end + 1):
         ix = key - note_base
-        print(f"  {note_names[ix]} {round(powers[ix], 2)}")
+        ps.append(powers[ix])
+        # print(f"  {note_names[ix]} {round(powers[ix], 2)}")
+
+    ix, px = max(enumerate(ps), key=lambda p: p[1])
+    tx = round(t / rate, 2)
+    if px > 50:
+        # print(f"{tx} {note_names[ix]} {px}")
+        notes_samples.append(ix)
+    else:
+        # print(f"{tx} rest {px}")
+        notes_samples.append(None)
+
+notes = [None]
+for i in range(1, len(notes_samples)):
+    if notes_samples[i-1] != notes_samples[i]:
+        notes.append(notes_samples[i])
+
+for ix in notes:
+    if ix is not None:
+        print(note_names[ix])
