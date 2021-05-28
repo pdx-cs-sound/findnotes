@@ -98,7 +98,7 @@ for t in range(0, len(samples) - window_len, window_len):
         # print(f"{tx} rest {px}")
         notes_samples.append(None)
 
-notes = [None]
+notes = [notes_samples[0]]
 for i in range(1, len(notes_samples)):
     if notes_samples[i-1] != notes_samples[i]:
         notes.append(notes_samples[i])
