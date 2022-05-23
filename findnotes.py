@@ -38,26 +38,33 @@ with wav.open(sys.argv[1], 'rb') as wavfile:
 
     # Unpack the signal.
     samples = np.array(array.array('h', wave_bytes),
-                       dtype=np.dtype(np.float)) / 32768.0
+                       dtype=np.dtype(float)) / 32768.0
 
 
 # Goertzel Filter
 # https://en.wikipedia.org/wiki/Goertzel_algorithm eqn 6
 class GoertzelFilter(object):
     def __init__(self, freq, length):
+        """Build the filter."""
         w = 2 * math.pi * freq / rate
-        self.norm = np.exp(np.complex(0, w * length))
+        self.norm = np.exp(complex(0, w * length))
         fwindow = np.blackman(length)
-        self.coeff = fwindow * np.array([np.exp(np.complex(0, -w * k))
+        self.coeff = fwindow * np.array([np.exp(complex(0, -w * k))
                                for k in range(length)])
         self.length = length
 
 
     def filter(self, samples):
+        """Run the filter on some samples."""
         assert len(samples) == self.length
         return self.norm * np.dot(self.coeff, samples)
 
+# Use a 50ms window.
 window_len = int(rate * 0.05)
+
+# Minimum note power in arbitrary units, determined
+# empirically.
+note_min = 50
 
 # Set up filter bank, output note names.
 base_names = ["A", "A#/Bb", "B", "C", "C#/Db", "D", "D#/Eb",
@@ -78,31 +85,35 @@ for key in range(note_base, note_end + 1):
     name = base_names[note % 12] + "[" + str(note // 12) + "]"
     note_names.append(name)
 
+# Run the filter bank across chunks of rectangular-windowed
+# samples looking for the power at each frequency.  Assume
+# that the input is monophonic, so take the loudest note
+# frequency as the note frequency for each sample.
 notes_samples = []
 for t in range(0, len(samples) - window_len, window_len):
     window = samples[t:t+window_len]
-    powers = [abs(f.filter(window)) for f in note_filters]
-    # print(round(t / rate, 2))
+    powers = np.array([abs(f.filter(window)) for f in note_filters])
     ps = []
-    for key in range(note_base, note_end + 1):
-        ix = key - note_base
-        ps.append(powers[ix])
-        # print(f"  {note_names[ix]} {round(powers[ix], 2)}")
 
-    ix, px = max(enumerate(ps), key=lambda p: p[1])
-    tx = round(t / rate, 2)
-    if px > 50:
-        # print(f"{tx} {note_names[ix]} {px}")
+    # Find the "loudest" key number and its power.
+    ix = np.argmax(powers)
+    px = powers[ix]
+
+    if px > note_min:
+        # Note found, so record it.
         notes_samples.append(ix)
     else:
-        # print(f"{tx} rest {px}")
+        # No note, so record rest for this interval.
         notes_samples.append(None)
 
+# Coalesce note samples into notes by emitting only state
+# changes.
 notes = [notes_samples[0]]
 for i in range(1, len(notes_samples)):
     if notes_samples[i-1] != notes_samples[i]:
         notes.append(notes_samples[i])
 
+# Display the resulting notes.
 for ix in notes:
     if ix is not None:
         print(note_names[ix])
